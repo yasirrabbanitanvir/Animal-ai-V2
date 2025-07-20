@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Animal Classification - AI Powered</title>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg-primary: #0f0f23;
+        --bg-secondary: #1a1a2e;
+        --bg-tertiary: #16213e;
+        --text-primary: #ffffff;
+        --text-secondary: #a0a0a0;
+        --accent: #00d4ff;
+        --accent-hover: #00b8e6;
+        --success: #00ff88;
+        --border: #2a2a4a;
+        --prediction-bg: rgba(59, 130, 246, 0.1);
+        --prediction-border: rgba(59, 130, 246, 0.3);
+      }
+
+      .light-theme {
+        --bg-primary: #ffffff;
+        --bg-secondary: #f8f9fa;
+        --bg-tertiary: #e9ecef;
+        --text-primary: #212529;
+        --text-secondary: #6c757d;
+        --accent: #007bff;
+        --accent-hover: #0056b3;
+        --success: #28a745;
+        --border: #dee2e6;
+        --prediction-bg: #f8f9ff;
+        --prediction-border: #d1d5db;
+      }
+
+      * {
+        transition: all 0.3s ease;
+      }
+
+      body {
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+      }
+
+      .glass-effect {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .light-theme .glass-effect {
+        background: rgba(248, 249, 250, 0.95);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--border);
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+        color: white;
+        padding: 12px 24px;
+        border-radius: 12px;
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+        transform: translateY(0);
+        box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 212, 255, 0.4);
+      }
+
+      .btn-secondary {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        padding: 8px 16px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.3s ease;
+      }
+
+      .btn-secondary:hover {
+        background: var(--bg-tertiary);
+        border-color: var(--accent);
+      }
+
+      .card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+
+      .light-theme .card {
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      }
+
+      .upload-zone {
+        border: 2px dashed var(--accent);
+        border-radius: 16px;
+        padding: 40px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: var(--bg-tertiary);
+      }
+
+      .upload-zone:hover {
+        border-color: var(--accent-hover);
+        background: rgba(0, 212, 255, 0.05);
+      }
+
+      .upload-zone.dragover {
+        border-color: var(--success);
+        background: rgba(0, 255, 136, 0.05);
+      }
+
+      .slider {
+        height: 400px;
+        overflow: hidden;
+        position: relative;
+        border-radius: 16px;
+      }
+
+      .slide {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        transition: opacity 1s ease-in-out;
+      }
+
+      .slide.active {
+        opacity: 1;
+      }
+
+      .slide img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .confidence-bar {
+        height: 8px;
+        background: var(--bg-tertiary);
+        border-radius: 4px;
+        overflow: hidden;
+        margin: 8px 0;
+      }
+
+      .confidence-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--accent), var(--success));
+        border-radius: 4px;
+        transition: width 1s ease;
+      }
+
+      .history-item {
+        padding: 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        border: 1px solid var(--border);
+        margin-bottom: 8px;
+        background: var(--bg-tertiary);
+      }
+
+      .history-item:hover {
+        background: rgba(0, 212, 255, 0.1);
+        border-color: var(--accent);
+      }
+
+      .prediction-result {
+        background: var(--prediction-bg);
+        border: 1px solid var(--prediction-border);
+        color: var(--text-primary);
+      }
+
+      .prediction-details {
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border);
+        color: var(--text-primary);
+      }
+
+      .mobile-nav {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: -100%;
+        width: 280px;
+        height: 100vh;
+        background: var(--bg-secondary);
+        border-right: 1px solid var(--border);
+        z-index: 1000;
+        transition: left 0.3s ease;
+        padding: 20px;
+      }
+
+      .mobile-nav.active {
+        left: 0;
+      }
+
+      .mobile-nav-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+      }
+
+      .mobile-nav-overlay.active {
+        display: block;
+      }
+
+      .search-bar {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 25px;
+        padding: 8px 16px;
+        color: var(--text-primary);
+        width: 250px;
+      }
+
+      .search-bar:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+      }
+
+      .theme-toggle {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 50px;
+        padding: 8px 16px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        color: var(--text-primary);
+      }
+
+      .theme-toggle:hover {
+        border-color: var(--accent);
+      }
+
+      .header-nav {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+
+      .loading {
+        animation: pulse 2s infinite;
+      }
+
+      footer {
+        background: var(--bg-secondary) !important;
+        color: var(--text-primary) !important;
+      }
+
+      footer h3 {
+        color: var(--text-primary) !important;
+      }
+
+      footer h4 {
+        color: var(--text-primary) !important;
+      }
+
+      footer p {
+        color: var(--text-secondary) !important;
+      }
+
+      @media (max-width: 768px) {
+        .desktop-nav {
+          display: none;
+        }
+
+        .mobile-nav {
+          display: block;
+        }
+
+        .mobile-menu-btn {
+          display: block;
+        }
+
+        .slider {
+          height: 250px;
+        }
+
+        .container {
+          padding-left: 12px;
+          padding-right: 12px;
+        }
+
+        .grid {
+          grid-template-columns: 1fr;
+        }
+
+        .card {
+          padding: 16px;
+        }
+
+        .upload-zone {
+          padding: 24px;
+        }
+      }
+      .details-btn {
+        background: var(--accent);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        margin-left: 8px;
+      }
+
+      .details-btn:hover {
+        background: var(--accent-hover);
+        transform: translateY(-1px);
+      }
+
+      #animalDetailsContainer {
+        transition: all 0.3s ease;
+      }
+
+      @media (min-width: 769px) {
+        .mobile-menu-btn {
+          display: none;
+        }
+      }
+
+      .result-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .screenshot-btn {
+        background: var(--success);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.3s ease;
+      }
+
+      .screenshot-btn:hover {
+        background: #00cc77;
+        transform: translateY(-1px);
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      class="mobile-nav-overlay"
+      id="mobileNavOverlay"
+      onclick="closeMobileNav()"
+    ></div>
+
+    <!-- Mobile Navigation -->
+    <nav class="mobile-nav" id="mobileNav">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-bold">Menu</h2>
+        <button onclick="closeMobileNav()" class="text-2xl">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <a
+          href="/animal-details"
+          class="block py-3 px-2 hover:text-blue-400 transition-colors border-b border-gray-600"
+        >
+          <i class="fas fa-info-circle mr-3"></i>Animal Details
+        </a>
+
+        <a
+          href="#footer"
+          class="block py-3 px-2 hover:text-blue-400 transition-colors border-b border-gray-600"
+        >
+          <i class="fas fa-info-circle mr-3"></i>Contact
+        </a>
+
+        <div class="py-3 px-2">
+          <button
+            class="theme-toggle w-full flex items-center justify-center"
+            onclick="toggleTheme()"
+          >
+            <i id="mobile-theme-icon" class="fas fa-moon mr-2"></i>
+            <span id="theme-text">Dark Mode</span>
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Header -->
+    <header class="glass-effect sticky top-0 z-50 p-4">
+      <div class="container mx-auto flex justify-between items-center">
+        <div class="flex items-center space-x-3">
+          <button
+            class="mobile-menu-btn text-2xl mr-3"
+            onclick="openMobileNav()"
+          >
+            <i class="fas fa-bars"></i>
+          </button>
+          <i class="fas fa-paw text-3xl" style="color: var(--accent)"></i>
+          <h1 class="text-2xl font-bold">AnimalAI</h1>
+        </div>
+
+        <!-- Desktop Navigation -->
+        <nav class="desktop-nav header-nav">
+         <nav class="desktop-nav header-nav">
+          
+  <a href="animalDetails.html" class="hover:text-blue-400 transition-colors">
+    Animal Details
+  </a>
+</nav>
+
+          <a href="#about" class="hover:text-blue-400 transition-colors"
+            >About</a
+          >
+          <a href="#footer" class="hover:text-blue-400 transition-colors"
+            >Contact</a
+          >
+          <button class="theme-toggle" onclick="toggleTheme()">
+            <i id="theme-icon" class="fas fa-moon"></i>
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <div class="container mx-auto px-4 py-8">
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <!-- Main Content -->
+        <div class="lg:col-span-3">
+          <div class="card mb-8">
+            <h2 class="text-2xl font-bold mb-4">Discover Wildlife</h2>
+            <div class="slider" id="animalSlider">
+              <div class="slide active">
+                <img
+                  src="https://images.unsplash.com/photo-1564349683136-77e08dba1ef7?w=800&h=400&fit=crop"
+                  alt="Lion"
+                />
+              </div>
+              <div class="slide">
+                <img
+                  src="https://t4.ftcdn.net/jpg/02/17/63/97/360_F_217639719_SxjxC4qyRoJQJdwmWtgQrvzTUX0SF3HY.jpg"
+                  alt="Camel"
+                />
+              </div>
+              <div class="slide">
+                <img
+                  src="https://images.unsplash.com/photo-1551969014-7d2c4cddf0b6?w=800&h=400&fit=crop"
+                  alt="Elephant"
+                />
+              </div>
+              <div class="slide">
+                <img
+                  src="https://static.vecteezy.com/system/resources/thumbnails/054/790/173/small_2x/heartwarming-moment-of-elephant-splashing-water-in-river-glowing-natural-light-creates-joyful-and-serene-scene-perfect-for-world-animal-day-photo.jpg"
+                  alt="Tiger"
+                />
+              </div>
+              <div class="slide">
+                <img
+                  src="https://images.unsplash.com/photo-1575550959106-5a7defe28b56?w=800&h=400&fit=crop"
+                  alt="Zebra"
+                />
+              </div>
+            </div>
+          </div>
+          <!-- About Section -->
+          <div class="card mb-8" id="about">
+            <h2 class="text-2xl font-bold mb-4">About AnimalAI</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div class="md:col-span-2">
+                <p class="mb-4">
+                  AnimalAI uses advanced deep learning models to identify over
+                  30 animal species with remarkable accuracy. Our AI combines
+                  computer vision with ecological knowledge to provide detailed
+                  insights about wildlife.
+                </p>
+                <p class="mb-4">
+                  Simply upload an image of any animal, and our system will
+                  analyze it using multiple neural networks including
+                  EfficientNetV2, MobileNet, and DenseNet to deliver precise
+                  classification results.
+                </p>
+              </div>
+              <div class="flex items-center justify-center">
+                <div
+                  class="bg-gray-800 rounded-full p-6 border-4 border-dashed border-blue-500"
+                >
+                  <i
+                    class="fas fa-paw text-6xl"
+                    style="color: var(--accent)"
+                  ></i>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Service Section -->
+          <div class="card">
+            <h2 class="text-2xl font-bold mb-6">AI Animal Classification</h2>
+
+            <div id="uploadSection">
+              <div
+                class="upload-zone"
+                id="uploadZone"
+                onclick="document.getElementById('fileInput').click()"
+              >
+                <i
+                  class="fas fa-cloud-upload-alt text-6xl mb-4"
+                  style="color: var(--accent)"
+                ></i>
+                <h3 class="text-xl font-semibold mb-2">Upload Animal Image</h3>
+                <p class="text-gray-400">
+                  Drag & drop or click to select an image
+                </p>
+                <input
+                  type="file"
+                  id="fileInput"
+                  accept="image/*"
+                  style="display: none"
+                  onchange="handleFileSelect(event)"
+                />
+              </div>
+              <div id="selectedImage" class="mt-4 hidden">
+                <img
+                  id="previewImage"
+                  class="w-full h-64 object-cover rounded-lg mb-4"
+                />
+                <button class="btn-primary w-full" onclick="predictAnimal()">
+                  <i class="fas fa-brain mr-2"></i>Predict Animal
+                </button>
+              </div>
+            </div>
+
+            <!-- Results Section -->
+            <div id="resultsSection" class="hidden">
+              <div class="border-t border-gray-600 pt-6 mt-6">
+                <div class="result-header">
+                  <h3 class="text-xl font-bold">AI Model Prediction Summary</h3>
+                  <button class="screenshot-btn" onclick="takeScreenshot()">
+                    <i class="fas fa-camera mr-2"></i>Screenshot
+                  </button>
+                </div>
+
+                <!-- Classification Result -->
+                <div
+                  class="prediction-result p-6 rounded-lg mb-6"
+                  id="predictionResult"
+                >
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <h4 class="text-2xl font-bold" id="predictedAnimal">
+                        Lion
+                      </h4>
+                      <p class="opacity-80">
+                        Confidence: <span id="confidence">95.2%</span>
+                      </p>
+                    </div>
+                    <i class="fas fa-check-circle text-4xl text-green-400"></i>
+                  </div>
+                </div>
+
+                <!-- Confidence Graph -->
+                <div class="mb-6">
+                  <h4 class="text-lg font-semibold mb-3">
+                    Model Confidence Levels
+                  </h4>
+                  <div class="space-y-3">
+                    <div>
+                      <div class="flex justify-between mb-1">
+                        <span>EfficientNetV2</span>
+                        <span id="conf1">94%</span>
+                      </div>
+                      <div class="confidence-bar">
+                        <div
+                          class="confidence-fill"
+                          id="bar1"
+                          style="width: 94%"
+                        ></div>
+                      </div>
+                    </div>
+                    <div>
+                      <div class="flex justify-between mb-1">
+                        <span>MobileNet</span>
+                        <span id="conf2">96%</span>
+                      </div>
+                      <div class="confidence-bar">
+                        <div
+                          class="confidence-fill"
+                          id="bar2"
+                          style="width: 96%"
+                        ></div>
+                      </div>
+                    </div>
+                    <div>
+                      <div class="flex justify-between mb-1">
+                        <span>DenseNet</span>
+                        <span id="conf3">96%</span>
+                      </div>
+                      <div class="confidence-bar">
+                        <div
+                          class="confidence-fill"
+                          id="bar3"
+                          style="width: 96%"
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Animal Details -->
+                <div class="prediction-details p-4 rounded-lg mb-6">
+                  <h4 class="text-lg font-semibold mb-3">Animal Information</h4>
+                  <div id="animalDetails">
+                    <p>
+                      <strong>Scientific Name:</strong>
+                      <span id="scientificName">Panthera leo</span>
+                    </p>
+                    <p>
+                      <strong>Habitat:</strong>
+                      <span id="habitat">African savannas, grasslands</span>
+                    </p>
+                    <p>
+                      <strong>Diet:</strong> <span id="diet">Carnivore</span>
+                    </p>
+                    <p>
+                      <strong>Conservation Status:</strong>
+                      <span id="status">Vulnerable</span>
+                    </p>
+                    <p class="mt-2" id="description">
+                      Lions are apex predators known for their social behavior
+                      and distinctive manes in males.
+                    </p>
+                  </div>
+                </div>
+
+                <button class="btn-primary w-full" onclick="newPrediction()">
+                  <i class="fas fa-plus mr-2"></i>New Prediction
+                </button>
+              </div>
+            </div>
+
+            <div id="loadingSection" class="hidden text-center py-8">
+              <i
+                class="fas fa-spinner fa-spin text-4xl mb-4"
+                style="color: var(--accent)"
+              ></i>
+              <p class="text-lg">Analyzing image with AI models...</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="lg:col-span-1">
+          <div class="card sticky top-24">
+            <h3 class="text-lg font-bold mb-4">Prediction History</h3>
+            <div id="historyPanel">
+              <p class="text-gray-400 text-center">No predictions yet</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="animalDetailsContainer" class="hidden mt-6">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold">Animal Details</h3>
+        <button
+          onclick="closeAnimalDetails()"
+          class="text-gray-400 hover:text-white"
+        >
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 mt-16 py-12" id="footer">
+      <div class="container mx-auto px-4">
+        <h3 class="text-2xl font-bold text-center mb-8">Our Team</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div class="text-center">
+            <h4 class="text-xl font-semibold mb-2">Md Arifuzzaman Swapnil</h4>
+            <p class="text-gray-400 mb-3">Lead AI Engineer</p>
+            <div class="space-x-4">
+              <a href="#" class="text-blue-400 hover:text-blue-300">
+                <i class="fab fa-linkedin text-xl"></i>
+              </a>
+              <a href="#" class="text-gray-400 hover:text-gray-300">
+                <i class="fas fa-envelope text-xl"></i>
+              </a>
+            </div>
+          </div>
+          <div class="text-center">
+            <h4 class="text-xl font-semibold mb-2">Yasir Rabbani Tanvir</h4>
+            <p class="text-gray-400 mb-3">Full Stack Developer</p>
+            <div class="space-x-4">
+              <a href="#" class="text-blue-400 hover:text-blue-300">
+                <i class="fab fa-linkedin text-xl"></i>
+              </a>
+              <a href="#" class="text-gray-400 hover:text-gray-300">
+                <i class="fas fa-envelope text-xl"></i>
+              </a>
+            </div>
+          </div>
+          <div class="text-center">
+            <h4 class="text-xl font-semibold mb-2">Md Rakibul Islam Nobel</h4>
+            <p class="text-gray-400 mb-3">UI/UX Designer</p>
+            <div class="space-x-4">
+              <a href="#" class="text-blue-400 hover:text-blue-300">
+                <i class="fab fa-linkedin text-xl"></i>
+              </a>
+              <a href="#" class="text-gray-400 hover:text-gray-300">
+                <i class="fas fa-envelope text-xl"></i>
+              </a>
+            </div>
+          </div>
+          <div class="text-center">
+            <h4 class="text-xl font-semibold mb-2">Md Abdur Rahman Shakil</h4>
+            <p class="text-gray-400 mb-3">UI/UX Designer</p>
+            <div class="space-x-4">
+              <a href="#" class="text-blue-400 hover:text-blue-300">
+                <i class="fab fa-linkedin text-xl"></i>
+              </a>
+              <a href="#" class="text-gray-400 hover:text-gray-300">
+                <i class="fas fa-envelope text-xl"></i>
+              </a>
+            </div>
+          </div>
+          <div class="text-center">
+            <h4 class="text-xl font-semibold mb-2">MD Safaat Anzum Polok</h4>
+            <p class="text-gray-400 mb-3">SQA Engineer</p>
+            <div class="space-x-4">
+              <a href="#" class="text-blue-400 hover:text-blue-300">
+                <i class="fab fa-linkedin text-xl"></i>
+              </a>
+              <a href="#" class="text-gray-400 hover:text-gray-300">
+                <i class="fas fa-envelope text-xl"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // Animal classes
+      const ANIMAL_CLASSES = [
+        "Hargila Bok",
+        "Lama",
+        "Rabbit",
+        "ass",
+        "bear",
+        "camel",
+        "camel bird",
+        "cat",
+        "cow",
+        "crocodile",
+        "deer",
+        "dog",
+        "elephant",
+        "gayal",
+        "giraffe",
+        "goat",
+        "hippopotamus",
+        "horse",
+        "kalo bok",
+        "kangaru",
+        "lion",
+        "monkey",
+        "panda",
+        "peacock",
+        "porcupine",
+        "rhinoceros",
+        "sheep",
+        "squirrel",
+        "tiger",
+        "zebra",
+      ];
+
+      let predictionHistory = [];
+      let currentSlide = 0;
+
+      function openMobileNav() {
+        document.getElementById("mobileNav").classList.add("active");
+        document.getElementById("mobileNavOverlay").classList.add("active");
+        document.body.style.overflow = "hidden";
+      }
+
+      function closeMobileNav() {
+        document.getElementById("mobileNav").classList.remove("active");
+        document.getElementById("mobileNavOverlay").classList.remove("active");
+        document.body.style.overflow = "auto";
+      }
+      const slides = document.querySelectorAll(".slide");
+      let currentIndex = 0;
+
+      setInterval(() => {
+        slides[currentIndex].classList.remove("active");
+        currentIndex = (currentIndex + 1) % slides.length;
+        slides[currentIndex].classList.add("active");
+      }, 3000);
+
+      function initSlider() {
+        const slides = document.querySelectorAll(".slide");
+        setInterval(() => {
+          slides[currentSlide].classList.remove("active");
+          currentSlide = (currentSlide + 1) % slides.length;
+          slides[currentSlide].classList.add("active");
+        }, 4000);
+      }
+
+      function handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            document.getElementById("previewImage").src = e.target.result;
+            document.getElementById("selectedImage").classList.remove("hidden");
+          };
+          reader.readAsDataURL(file);
+        }
+      }
+
+      const uploadZone = document.getElementById("uploadZone");
+
+      uploadZone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        uploadZone.classList.add("dragover");
+      });
+
+      uploadZone.addEventListener("dragleave", () => {
+        uploadZone.classList.remove("dragover");
+      });
+
+      uploadZone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        uploadZone.classList.remove("dragover");
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+          const file = files[0];
+          if (file.type.startsWith("image/")) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+              document.getElementById("previewImage").src = e.target.result;
+              document
+                .getElementById("selectedImage")
+                .classList.remove("hidden");
+            };
+            reader.readAsDataURL(file);
+          }
+        }
+      });
+
+      async function takeScreenshot() {
+        try {
+          const resultsSection = document.getElementById("resultsSection");
+
+          if (typeof html2canvas !== "undefined") {
+            const canvas = await html2canvas(resultsSection, {
+              backgroundColor: getComputedStyle(document.body).getPropertyValue(
+                "--bg-primary"
+              ),
+              scale: 2,
+              useCORS: true,
+            });
+
+            const link = document.createElement("a");
+            link.download = `animal-prediction-${new Date().getTime()}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+          } else {
+            alert(
+              "Screenshot feature requires html2canvas library. Please add the library to enable this feature."
+            );
+          }
+        } catch (error) {
+          console.error("Screenshot error:", error);
+          alert("Error taking screenshot. Please try again.");
+        }
+      }
+
+      async function predictAnimal() {
+        const fileInput = document.getElementById("fileInput");
+        const formData = new FormData();
+        formData.append("file", fileInput.files[0]);
+
+        try {
+          document.getElementById("uploadSection").classList.add("hidden");
+          document.getElementById("loadingSection").classList.remove("hidden");
+
+          const response = await fetch("http://localhost:5000/predict", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (!response.ok) throw new Error("Prediction failed");
+
+          const responseData = await response.json();
+          console.log("Full response:", responseData);
+
+          const topPrediction = responseData.top_prediction;
+
+          updatePredictionUI(topPrediction, responseData);
+          addToHistory(topPrediction, responseData);
+
+          document.getElementById("loadingSection").classList.add("hidden");
+          document.getElementById("resultsSection").classList.remove("hidden");
+        } catch (error) {
+          console.error("Prediction error:", error);
+          alert("Error processing prediction. Please try again.");
+          resetUI();
+        }
+      }
+
+      function loadAnimalFromUrl() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const animalName = urlParams.get("animal");
+
+        if (animalName) {
+          const animal = animalsDatabase.find(
+            (a) => a.name.toLowerCase() === animalName.toLowerCase()
+          );
+
+          if (animal) {
+            openModal(animal);
+          }
+        }
+      }
+
+      function updatePredictionUI(topPrediction, fullResponse) {
+        document.getElementById("predictedAnimal").textContent =
+          topPrediction.animal;
+        document.getElementById("confidence").textContent = `${(
+          topPrediction.confidence * 100
+        ).toFixed(1)}%`;
+
+        // Display individual model confidences
+        if (topPrediction.model_confidences) {
+          const modelMapping = {
+            efficientnet: {
+              element: "conf1",
+              bar: "bar1",
+              name: "EfficientNetV2",
+            },
+            mobilenet: { element: "conf2", bar: "bar2", name: "MobileNet" },
+            densenet: { element: "conf3", bar: "bar3", name: "DenseNet" },
+          };
+
+          Object.keys(modelMapping).forEach((modelName) => {
+            const modelConf = topPrediction.model_confidences[modelName];
+            if (modelConf !== undefined) {
+              const confPercentage = (modelConf * 100).toFixed(1);
+              const mapping = modelMapping[modelName];
+
+              document.getElementById(
+                mapping.element
+              ).textContent = `${confPercentage}%`;
+
+              setTimeout(() => {
+                document.getElementById(
+                  mapping.bar
+                ).style.width = `${confPercentage}%`;
+              }, 100);
+            }
+          });
+        }
+
+        const details = topPrediction.details || {};
+        document.getElementById("scientificName").textContent =
+          details.scientific || "N/A";
+        document.getElementById("habitat").textContent =
+          details.habitat || "N/A";
+        document.getElementById("diet").textContent = details.diet || "N/A";
+        document.getElementById("status").textContent = details.status || "N/A";
+        document.getElementById("description").textContent =
+          details.description || "No description available";
+      }
+
+      function addToHistory(topPrediction, fullResponse) {
+        const prediction = {
+          animal: topPrediction.animal,
+          confidence: (topPrediction.confidence * 100).toFixed(1),
+          timestamp: new Date().toLocaleString(),
+          image: document.getElementById("previewImage").src,
+          details: topPrediction.details,
+          model_confidences: topPrediction.model_confidences,
+        };
+
+        predictionHistory.unshift(prediction);
+        updateHistory();
+      }
+
+      function loadHistoryItem(index) {
+        const pred = predictionHistory[index];
+
+        document.getElementById("previewImage").src = pred.image;
+        document.getElementById("selectedImage").classList.remove("hidden");
+
+        const mockTopPrediction = {
+          animal: pred.animal,
+          confidence: pred.confidence / 100,
+          model_confidences: pred.model_confidences || {
+            efficientnet: pred.confidence / 100,
+            mobilenet: pred.confidence / 100,
+            densenet: pred.confidence / 100,
+          },
+          details: pred.details,
+        };
+
+        updatePredictionUI(mockTopPrediction, null);
+
+        document.getElementById("uploadSection").classList.add("hidden");
+        document.getElementById("loadingSection").classList.add("hidden");
+        document.getElementById("resultsSection").classList.remove("hidden");
+      }
+
+      function showAnimalDetails() {
+        const animal = document.getElementById("predictedAnimal").textContent;
+        const container = document.getElementById("animalDetailsContainer");
+        const frame = document.getElementById("animalDetailsFrame");
+
+        frame.src = `/animal-details?animal=${encodeURIComponent(animal)}`;
+        container.classList.remove("hidden");
+
+        container.scrollIntoView({ behavior: "smooth" });
+      }
+
+      function closeAnimalDetails() {
+        document
+          .getElementById("animalDetailsContainer")
+          .classList.add("hidden");
+        document.getElementById("animalDetailsFrame").src = "";
+      }
+
+      function updateHistory() {
+        const historyPanel = document.getElementById("historyPanel");
+        historyPanel.innerHTML =
+          predictionHistory.length === 0
+            ? '<p class="text-gray-400 text-center">No predictions yet</p>'
+            : predictionHistory
+                .map(
+                  (pred, index) => `
+                    <div class="history-item" onclick="loadHistoryItem(${index})">
+                        <div class="flex items-center space-x-3">
+                            <img src="${pred.image}" alt="${pred.animal}" class="w-12 h-12 object-cover rounded">
+                            <div>
+                                <p class="font-semibold">${pred.animal}</p>
+                                <p class="text-sm text-gray-400">${pred.confidence}% • ${pred.timestamp}</p>
+                            </div>
+                        </div>
+                    </div>
+                `
+                )
+                .join("");
+      }
+
+      function newPrediction() {
+        document.getElementById("resultsSection").classList.add("hidden");
+        document.getElementById("uploadSection").classList.remove("hidden");
+        document.getElementById("selectedImage").classList.add("hidden");
+        document.getElementById("fileInput").value = "";
+      }
+
+      function resetUI() {
+        document.getElementById("loadingSection").classList.add("hidden");
+        document.getElementById("uploadSection").classList.remove("hidden");
+        document.getElementById("selectedImage").classList.add("hidden");
+      }
+
+      function toggleTheme() {
+        document.body.classList.toggle("light-theme");
+        const icons = document.querySelectorAll(
+          "#theme-icon, #mobile-theme-icon"
+        );
+        icons.forEach((icon) => {
+          icon.className = document.body.classList.contains("light-theme")
+            ? "fas fa-sun"
+            : "fas fa-moon";
+        });
+      }
+
+      // Search functionality
+      let searchTimeout;
+      document
+        .getElementById("searchBar")
+        .addEventListener("input", function (e) {
+          clearTimeout(searchTimeout);
+          searchTimeout = setTimeout(async () => {
+            const query = e.target.value.trim().toLowerCase();
+            if (query.length < 2) return;
+
+            try {
+              const response = await fetch(
+                `http://localhost:5000/search-animals?query=${encodeURIComponent(
+                  query
+                )}`
+              );
+              const data = await response.json();
+              showSearchResults(data.results);
+            } catch (error) {
+              console.error("Search error:", error);
+            }
+          }, 300);
+        });
+
+      function showSearchResults(results) {
+        console.log("Search results:", results);
+      }
+
+      window.addEventListener("load", () => {
+        initSlider();
+      });
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  </body>
+</html>

@@ -1,0 +1,1793 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Animal Classification - AI Powered</title>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg-primary: #0f0f23;
+        --bg-secondary: #1a1a2e;
+        --bg-tertiary: #16213e;
+        --text-primary: #ffffff;
+        --text-secondary: #a0a0a0;
+        --accent: #00d4ff;
+        --accent-hover: #00b8e6;
+        --success: #00ff88;
+        --border: #2a2a4a;
+        --prediction-bg: rgba(59, 130, 246, 0.1);
+        --prediction-border: rgba(59, 130, 246, 0.3);
+      }
+
+      .light-theme {
+        --bg-primary: #ffffff;
+        --bg-secondary: #f8f9fa;
+        --bg-tertiary: #e9ecef;
+        --text-primary: #212529;
+        --text-secondary: #6c757d;
+        --accent: #007bff;
+        --accent-hover: #0056b3;
+        --success: #28a745;
+        --border: #dee2e6;
+        --prediction-bg: #f8f9ff;
+        --prediction-border: #d1d5db;
+      }
+
+      * {
+        transition: all 0.3s ease;
+      }
+
+      body {
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+      }
+
+      .glass-effect {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .light-theme .glass-effect {
+        background: rgba(248, 249, 250, 0.95);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--border);
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+        color: white;
+        padding: 12px 24px;
+        border-radius: 12px;
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+        transform: translateY(0);
+        box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 212, 255, 0.4);
+      }
+
+      .btn-secondary {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        padding: 8px 16px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.3s ease;
+      }
+
+      .btn-secondary:hover {
+        background: var(--bg-tertiary);
+        border-color: var(--accent);
+      }
+
+      .card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+
+      .light-theme .card {
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      }
+
+      .slider {
+        height: 400px;
+        overflow: hidden;
+        position: relative;
+        border-radius: 16px;
+      }
+
+      .slide {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        transition: opacity 1s ease-in-out;
+      }
+
+      .slide.active {
+        opacity: 1;
+      }
+
+      .slide img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .mobile-nav {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: -100%;
+        width: 280px;
+        height: 100vh;
+        background: var(--bg-secondary);
+        border-right: 1px solid var(--border);
+        z-index: 1000;
+        transition: left 0.3s ease;
+        padding: 20px;
+      }
+
+      .mobile-nav.active {
+        left: 0;
+      }
+
+      .mobile-nav-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+      }
+
+      .mobile-nav-overlay.active {
+        display: block;
+      }
+
+      .search-bar {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 25px;
+        padding: 8px 16px;
+        color: var(--text-primary);
+        width: 250px;
+      }
+
+      .search-bar:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+      }
+
+      .theme-toggle {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 50px;
+        padding: 8px 16px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        color: var(--text-primary);
+      }
+
+      .theme-toggle:hover {
+        border-color: var(--accent);
+      }
+
+      .header-nav {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+
+      .loading {
+        animation: pulse 1s infinite;
+      }
+
+      footer {
+        background: var(--bg-secondary) !important;
+        color: var(--text-primary) !important;
+      }
+
+      footer h3 {
+        color: var(--text-primary) !important;
+      }
+
+      footer h4 {
+        color: var(--text-primary) !important;
+      }
+
+      footer p {
+        color: var(--text-secondary) !important;
+      }
+
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 1.8rem;
+        font-weight: 700;
+      }
+
+      .logo-icon {
+        color: var(--accent);
+        font-size: 2.2rem;
+      }
+
+      .main-container {
+        max-width: 1400px;
+        margin: 3rem auto;
+        padding: 0 2rem;
+      }
+
+      .page-title {
+        text-align: center;
+        margin-bottom: 2.5rem;
+      }
+
+      .page-title h1 {
+        font-size: 2.8rem;
+        margin-bottom: 0.5rem;
+        background: linear-gradient(90deg, var(--accent), var(--success));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+
+      .page-title p {
+        font-size: 1.2rem;
+        color: var(--text-secondary);
+        max-width: 700px;
+        margin: 0 auto;
+      }
+
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        justify-content: center;
+        margin-bottom: 2rem;
+      }
+
+      .search-bar {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 25px;
+        padding: 12px 20px;
+        color: var(--text-primary);
+        width: 100%;
+        max-width: 500px;
+        font-size: 1rem;
+      }
+
+      .search-bar:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+      }
+
+      .filter-btn {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 8px 16px;
+        color: var(--text-primary);
+        cursor: pointer;
+        transition: all 0.3s;
+        font-size: 0.95rem;
+      }
+
+      .filter-btn:hover,
+      .filter-btn.active {
+        background: var(--accent);
+        color: white;
+        border-color: var(--accent);
+      }
+
+      .animals-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.8rem;
+        margin-top: 2rem;
+      }
+
+      .animal-card {
+        background: var(--bg-secondary);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+        cursor: pointer;
+        transition: transform 0.3s, box-shadow 0.3s;
+      }
+
+      .animal-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+      }
+
+      .animal-image {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .animal-info {
+        padding: 1.5rem;
+      }
+
+      .animal-name {
+        font-size: 1.4rem;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .scientific-name {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        font-style: italic;
+        margin-bottom: 0.8rem;
+      }
+
+      .animal-stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.8rem;
+        margin-top: 0.8rem;
+      }
+
+      .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+      }
+
+      .stat-icon {
+        color: var(--accent);
+        width: 20px;
+        text-align: center;
+      }
+
+      .status-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+
+      .status-endangered {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+      }
+
+      .status-vulnerable {
+        background: rgba(245, 158, 11, 0.2);
+        color: #f59e0b;
+        border: 1px solid rgba(245, 158, 11, 0.3);
+      }
+
+      .status-least-concern {
+        background: rgba(34, 197, 94, 0.2);
+        color: #22c55e;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+      }
+
+      .status-domesticated {
+        background: rgba(99, 102, 241, 0.2);
+        color: #6366f1;
+        border: 1px solid rgba(99, 102, 241, 0.3);
+      }
+
+      .detail-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--modal-overlay);
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s, visibility 0.3s;
+      }
+
+      .detail-modal.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .modal-content {
+        background: var(--bg-secondary);
+        border-radius: 20px;
+        width: 100%;
+        max-width: 900px;
+        max-height: 90vh;
+        overflow-y: auto;
+        position: relative;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        transform: translateY(30px);
+        transition: transform 0.4s;
+      }
+
+      .detail-modal.active .modal-content {
+        transform: translateY(0);
+      }
+
+      .modal-close {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: var(--bg-tertiary);
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--border);
+        color: var(--text-primary);
+        font-size: 1.3rem;
+        cursor: pointer;
+        z-index: 10;
+        transition: all 0.3s;
+      }
+
+      .modal-close:hover {
+        background: var(--accent);
+        color: white;
+        transform: rotate(90deg);
+      }
+
+      .modal-header {
+        position: relative;
+      }
+
+      .modal-image {
+        width: 100%;
+        height: 350px;
+        object-fit: cover;
+        border-radius: 20px 20px 0 0;
+      }
+
+      .modal-title {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+        padding: 30px 30px 20px;
+        color: white;
+      }
+
+      .modal-title h2 {
+        font-size: 2.2rem;
+        margin-bottom: 5px;
+      }
+
+      .modal-title .scientific-name {
+        font-size: 1.2rem;
+        color: rgba(255, 255, 255, 0.8);
+      }
+
+      .modal-body {
+        padding: 30px;
+      }
+
+      .modal-section {
+        margin-bottom: 25px;
+      }
+
+      .modal-section h3 {
+        font-size: 1.4rem;
+        margin-bottom: 15px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid var(--accent);
+        display: inline-block;
+      }
+
+      .description-text {
+        line-height: 1.8;
+        font-size: 1.1rem;
+      }
+
+      .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-top: 20px;
+      }
+
+      .info-item {
+        background: var(--bg-tertiary);
+        padding: 16px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+      }
+
+      .info-label {
+        font-weight: 600;
+        color: var(--accent);
+        margin-bottom: 8px;
+        font-size: 0.95rem;
+      }
+
+      .info-value {
+        font-size: 1.1rem;
+      }
+
+      .tag-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      .tag {
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border);
+        border-radius: 15px;
+        padding: 6px 14px;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+      }
+
+      .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 20px;
+      }
+
+      .copy-btn {
+        background: var(--accent);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 12px;
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 1rem;
+        transition: all 0.3s;
+      }
+
+      .copy-btn:hover {
+        background: var(--accent-hover);
+        transform: translateY(-2px);
+      }
+
+      .team-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 2rem;
+        margin-top: 1rem;
+      }
+
+      .team-member {
+        background: var(--bg-secondary);
+        padding: 1.5rem;
+        border-radius: 16px;
+        box-shadow: var(--card-shadow);
+      }
+
+      .team-member h4 {
+        font-size: 1.3rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .team-role {
+        color: var(--text-secondary);
+        margin-bottom: 1rem;
+      }
+
+      .social-links {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+      }
+
+      .social-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--bg-tertiary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--accent);
+        font-size: 1.2rem;
+        transition: all 0.3s;
+      }
+
+      .social-icon:hover {
+        background: var(--accent);
+        color: white;
+        transform: translateY(-3px);
+      }
+
+      @media (min-width: 769px) {
+        .mobile-menu-btn {
+          display: none;
+        }
+      }
+
+      /* Responsive styles */
+      @media (max-width: 768px) {
+        .desktop-nav {
+          display: none;
+        }
+
+        .mobile-nav {
+          display: block;
+        }
+
+        .mobile-menu-btn {
+          display: block;
+        }
+
+        .slider {
+          height: 250px;
+        }
+
+        .container {
+          padding-left: 12px;
+          padding-right: 12px;
+        }
+
+        .grid {
+          grid-template-columns: 1fr;
+        }
+
+        .card {
+          padding: 16px;
+        }
+        .header-container {
+          flex-direction: column;
+          text-align: center;
+        }
+
+        .animals-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .modal-image {
+          height: 250px;
+        }
+
+        .modal-title h2 {
+          font-size: 1.8rem;
+        }
+
+        .modal-body {
+          padding: 20px;
+        }
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .animal-card {
+        animation: fadeIn 0.5s ease-out;
+        animation-fill-mode: both;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Header -->
+    <header class="glass-effect sticky top-0 z-50 p-4">
+      <div class="container mx-auto flex justify-between items-center">
+        <div class="flex items-center space-x-3">
+          <button
+            class="mobile-menu-btn text-2xl mr-3"
+            onclick="openMobileNav()"
+          >
+            <i class="fas fa-bars"></i>
+          </button>
+          <i class="fas fa-paw text-3xl" style="color: var(--accent)"></i>
+          <h1 class="text-2xl font-bold">AnimalAI</h1>
+        </div>
+
+        <!-- Desktop Navigation -->
+        <nav class="desktop-nav header-nav">
+          <a href="/" class="hover:text-blue-400 transition-colors">Home</a>
+
+          <button class="theme-toggle" onclick="toggleTheme()">
+            <i id="theme-icon" class="fas fa-moon"></i>
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="main-container">
+      <div class="page-title">
+        <h1>Animal Encyclopedia</h1>
+        <p>
+          Discover detailed information about 30 different animal species from
+          around the world
+        </p>
+      </div>
+
+      <!-- Controls -->
+      <div class="controls">
+        <input
+          type="text"
+          class="search-bar"
+          id="searchInput"
+          placeholder="Search animals..."
+        />
+        <div class="filter-buttons">
+          <button class="filter-btn active" data-filter="all">
+            All Animals
+          </button>
+          <button class="filter-btn" data-filter="endangered">
+            Endangered
+          </button>
+          <button class="filter-btn" data-filter="carnivore">Carnivores</button>
+          <button class="filter-btn" data-filter="herbivore">Herbivores</button>
+        </div>
+      </div>
+
+      <div class="animals-grid" id="animalsGrid"></div>
+    </div>
+
+    <!-- Detail Modal -->
+    <div class="detail-modal" id="detailModal">
+      <div class="modal-content">
+        <button class="modal-close" onclick="closeModal()">
+          <i class="fas fa-times"></i>
+        </button>
+        <div class="modal-header">
+          <img id="modalImage" class="modal-image" src="" alt="" />
+          <div class="modal-title">
+            <h2 id="modalAnimalName"></h2>
+            <div class="scientific-name" id="modalScientificName"></div>
+          </div>
+        </div>
+        <div class="modal-body">
+          <div class="modal-section">
+            <h3>Description</h3>
+            <p class="description-text" id="modalDescription"></p>
+          </div>
+
+          <div class="modal-section">
+            <h3>Details</h3>
+            <div class="info-grid">
+              <div class="info-item">
+                <div class="info-label">Habitat</div>
+                <div class="info-value" id="modalHabitat"></div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">Diet</div>
+                <div class="info-value" id="modalDiet"></div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">Conservation Status</div>
+                <div class="info-value" id="modalStatus"></div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">Average Weight</div>
+                <div class="info-value" id="modalWeight"></div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">Average Lifespan</div>
+                <div class="info-value" id="modalLifespan"></div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">Top Speed</div>
+                <div class="info-value" id="modalSpeed"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-section">
+            <h3>Tags</h3>
+            <div class="tag-list" id="modalTags"></div>
+          </div>
+
+          <div class="modal-actions">
+            <button class="copy-btn" onclick="copyAnimalDetails()">
+              <i class="fas fa-copy"></i> Copy Details
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 mt-16 py-12" id="footer">
+      <div class="container mx-auto px-4">
+        <h3 class="text-2xl font-bold text-center mb-8">Our Team</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div class="text-center">
+            <h4 class="text-xl font-semibold mb-2">Md Arifuzzaman Swapnil</h4>
+            <p class="text-gray-400 mb-3">Lead AI Engineer</p>
+            <div class="space-x-4">
+              <a href="#" class="text-blue-400 hover:text-blue-300">
+                <i class="fab fa-linkedin text-xl"></i>
+              </a>
+              <a href="#" class="text-gray-400 hover:text-gray-300">
+                <i class="fas fa-envelope text-xl"></i>
+              </a>
+            </div>
+          </div>
+          <div class="text-center">
+            <h4 class="text-xl font-semibold mb-2">Yasir Rabbani Tanvir</h4>
+            <p class="text-gray-400 mb-3">Full Stack Developer</p>
+            <div class="space-x-4">
+              <a href="#" class="text-blue-400 hover:text-blue-300">
+                <i class="fab fa-linkedin text-xl"></i>
+              </a>
+              <a href="#" class="text-gray-400 hover:text-gray-300">
+                <i class="fas fa-envelope text-xl"></i>
+              </a>
+            </div>
+          </div>
+          <div class="text-center">
+            <h4 class="text-xl font-semibold mb-2">Md Rakibul Islam Nobel</h4>
+            <p class="text-gray-400 mb-3">UI/UX Designer</p>
+            <div class="space-x-4">
+              <a href="#" class="text-blue-400 hover:text-blue-300">
+                <i class="fab fa-linkedin text-xl"></i>
+              </a>
+              <a href="#" class="text-gray-400 hover:text-gray-300">
+                <i class="fas fa-envelope text-xl"></i>
+              </a>
+            </div>
+          </div>
+          <div class="text-center">
+            <h4 class="text-xl font-semibold mb-2">Md Abdur Rahman Shakil</h4>
+            <p class="text-gray-400 mb-3">UI/UX Designer</p>
+            <div class="space-x-4">
+              <a href="#" class="text-blue-400 hover:text-blue-300">
+                <i class="fab fa-linkedin text-xl"></i>
+              </a>
+              <a href="#" class="text-gray-400 hover:text-gray-300">
+                <i class="fas fa-envelope text-xl"></i>
+              </a>
+            </div>
+          </div>
+          <div class="text-center">
+            <h4 class="text-xl font-semibold mb-2">MD Safaat Anzum Polok</h4>
+            <p class="text-gray-400 mb-3">SQA Engineer</p>
+            <div class="space-x-4">
+              <a href="#" class="text-blue-400 hover:text-blue-300">
+                <i class="fab fa-linkedin text-xl"></i>
+              </a>
+              <a href="#" class="text-gray-400 hover:text-gray-300">
+                <i class="fas fa-envelope text-xl"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // animal database
+      const animalsDatabase = [
+        {
+          name: "Lion",
+          scientific: "Panthera leo",
+          habitat: "African savannas, grasslands",
+          diet: "Carnivore",
+          status: "Vulnerable",
+          image:
+            "https://i.pinimg.com/originals/2b/9c/21/2b9c2147777c6933579d2b1e1ae14a9e.jpg",
+          description:
+            "Lions are apex predators known for their social behavior and distinctive manes in males. They live in prides and are found primarily in Africa. Lions are the second-largest big cat species in the world, after tigers. They are highly territorial and communicate through vocalizations, scent marking, and visual signals.",
+          tags: [
+            "big cat",
+            "apex predator",
+            "social",
+            "mane",
+            "pride",
+            "roar",
+            "savanna",
+          ],
+          weight: "120-250 kg",
+          lifespan: "10-14 years (wild)",
+          speed: "80 km/h",
+        },
+        {
+          name: "Tiger",
+          scientific: "Panthera tigris",
+          habitat: "Tropical forests, grasslands",
+          diet: "Carnivore",
+          status: "Endangered",
+          image:
+            "https://images.unsplash.com/photo-1508817628294-5a453fa0b8fb?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8YmVuZ2FsJTIwdGlnZXJ8ZW58MHx8MHx8fDA%3D",
+          description:
+            "Solitary big cats known for their striped coats and powerful builds. Tigers are the largest cat species and excellent swimmers. They primarily hunt alone at night and can take down prey larger than themselves. There are several subspecies of tigers, with the Siberian tiger being the largest.",
+          tags: [
+            "big cat",
+            "stripes",
+            "solitary",
+            "swimmer",
+            "forest",
+            "stealth",
+            "ambush",
+          ],
+          weight: "65-320 kg",
+          lifespan: "8-10 years (wild)",
+          speed: "65 km/h",
+        },
+        {
+          name: "Elephant",
+          scientific: "Loxodonta africana",
+          habitat: "Forests, savannas",
+          diet: "Herbivore",
+          status: "Endangered",
+          image:
+            "https://wallpapers.com/images/hd/elephant-raising-trunk-hd-rb4qba3x7vtb69bi.jpg",
+          description:
+            "Largest land animals with trunks used for communication and feeding. They have complex social structures and excellent memories. Elephants are highly intelligent, displaying behaviors associated with grief, learning, play, and use of tools. They play a crucial role in their ecosystems by creating water holes and clearing paths.",
+          tags: [
+            "largest land animal",
+            "trunk",
+            "tusks",
+            "intelligent",
+            "memory",
+            "social",
+            "herbivore",
+          ],
+          weight: "2,700-6,000 kg",
+          lifespan: "60-70 years",
+          speed: "40 km/h",
+        },
+        {
+          name: "Giraffe",
+          scientific: "Giraffa camelopardalis",
+          habitat: "African savannas and woodlands",
+          diet: "Herbivore",
+          status: "Vulnerable",
+          image:
+            "https://wallpapers.com/images/featured/giraffe-fbbe89nexx6mapu6.jpg",
+          description:
+            "Tallest land animals with long necks adapted for browsing tree leaves. They have unique spotted patterns and long tongues. Giraffes spend most of their day eating, consuming up to 45 kg of leaves and twigs. Their height gives them an advantage in spotting predators from a distance.",
+          tags: [
+            "tallest animal",
+            "long neck",
+            "spots",
+            "acacia trees",
+            "long tongue",
+            "herbivore",
+            "gentle",
+          ],
+          weight: "750-1,930 kg",
+          lifespan: "20-25 years",
+          speed: "60 km/h",
+        },
+        {
+          name: "Zebra",
+          scientific: "Equus quagga",
+          habitat: "African savannas and grasslands",
+          diet: "Herbivore",
+          status: "Near Threatened",
+          image:
+            "https://media.istockphoto.com/id/1148061410/photo/close-up-of-two-plains-zebras-in-namibian-steppes-by-waterhole.jpg?s=612x612&w=0&k=20&c=lORZaapUyb9u3KMhNfWgpsTwk-PaR2YDrgH9rE_mcAQ=",
+          description:
+            "Known for black and white stripes and strong social structure. Each zebra has a unique stripe pattern like a fingerprint. Zebras form large herds and migrate in search of food and water. Their stripes may serve as camouflage, temperature regulation, or a deterrent to biting flies.",
+          tags: [
+            "stripes",
+            "unique pattern",
+            "herd animal",
+            "social",
+            "migration",
+            "grasslands",
+            "herbivore",
+          ],
+          weight: "200-450 kg",
+          lifespan: "20-30 years",
+          speed: "65 km/h",
+        },
+        {
+          name: "Bear",
+          scientific: "Ursus maritimus",
+          habitat: "Arctic region",
+          diet: "Carnivore",
+          status: "Vulnerable",
+          image: "https://cdn.wallpapersafari.com/75/93/Vtr4H9.jpg",
+          description:
+            "Largest land carnivore adapted to life in the Arctic. They are excellent swimmers with a thick layer of body fat and fur for insulation. Polar bears primarily hunt seals from sea ice platforms. Climate change and melting ice pose significant threats to their survival.",
+          tags: [
+            "arctic",
+            "carnivore",
+            "swimmer",
+            "sea ice",
+            "white fur",
+            "predator",
+            "endangered",
+          ],
+          weight: "350-700 kg",
+          lifespan: "20-30 years",
+          speed: "40 km/h",
+        },
+
+        {
+          name: "Kangaroo",
+          scientific: "Macropus",
+          habitat: "Australian grasslands and forests",
+          diet: "Herbivore",
+          status: "Least Concern",
+          image:
+            "https://w0.peakpx.com/wallpaper/291/449/HD-wallpaper-kangaroo-bag-small-kangaroo-australia-wildlife-thumbnail.jpg",
+          description:
+            "Marsupials known for powerful hind legs and hopping locomotion. Females carry their young (joeys) in a pouch. Kangaroos are social animals that live in groups called mobs. They can cover great distances efficiently with their hopping motion.",
+          tags: [
+            "marsupial",
+            "hopping",
+            "pouch",
+            "australia",
+            "herbivore",
+            "powerful legs",
+            "social",
+          ],
+          weight: "15-90 kg",
+          lifespan: "6-8 years (wild)",
+          speed: "70 km/h",
+        },
+        {
+          name: "Panda",
+          scientific: "Ailuropoda melanoleuca",
+          habitat: "Mountain forests in China",
+          diet: "Herbivore",
+          status: "Vulnerable",
+          image:
+            "https://www.iconwallstickers.co.uk/web/image/product.image/319648/image_1024/WS-50455-03?unique=cca2b38",
+          description:
+            "Distinctive black-and-white bears that primarily eat bamboo. They spend up to 14 hours a day eating bamboo. Despite being classified as carnivores, pandas have a diet that is over 99% bamboo. Conservation efforts have helped increase their population in recent years.",
+          tags: [
+            "bamboo eater",
+            "black and white",
+            "conservation symbol",
+            "China",
+            "forest",
+            "vulnerable",
+            "herbivore",
+          ],
+          weight: "100-115 kg",
+          lifespan: "20 years (wild)",
+          speed: "32 km/h",
+        },
+        {
+          name: "Gayal",
+          scientific: "Bos frontalis",
+          habitat:
+            "Forested hills and mountainous regions of Northeast India, Myanmar, Bangladesh, and Bhutan",
+          diet: "Herbivore",
+          status: "Domesticated",
+          image:
+            "https://t4.ftcdn.net/jpg/02/45/85/73/360_F_245857359_Cd4Hi7gnNIg2F00ukvZqP9HgSLWKAT4D.jpg",
+          description:
+            "Gayals, also known as Mithun, are large domesticated bovines native to Northeast India and nearby regions. They are known for their robust build, gentle temperament, and cultural significance among local tribal communities. Gayals are primarily reared for meat and ceremonial purposes. Unlike wild gaur, Gayals are semi-domesticated and are usually allowed to graze freely in forested areas.",
+          tags: [
+            "bovine",
+            "mithun",
+            "herbivore",
+            "domesticated",
+            "forest dweller",
+            "tribal livestock",
+          ],
+          weight: "400-1000 kg",
+          lifespan: "15-20 years",
+          speed: "30 km/h",
+        },
+        {
+          name: "Rhinoceros",
+          scientific: "Rhinocerotidae",
+          habitat:
+            "Grasslands, savannas, and tropical forests of Africa and South Asia",
+          diet: "Herbivore",
+          status: "Vulnerable",
+          image:
+            "https://c4.wallpaperflare.com/wallpaper/191/330/560/photography-of-brown-concrete-bridge-campbell-town-tasmania-tasmania-campbell-town-tasmania-tasmania-wallpaper-preview.jpg",
+          description:
+            "Rhinoceroses are large, thick-skinned herbivores known for their characteristic horns made of keratin. There are five species, including the White Rhino, Black Rhino, Indian Rhino, Javan Rhino, and Sumatran Rhino. Rhinos have poor eyesight but excellent hearing and smell. They are solitary animals and are threatened primarily due to habitat loss and poaching for their horns.",
+          tags: [
+            "large mammal",
+            "herbivore",
+            "horned",
+            "endangered",
+            "thick skin",
+            "grazer",
+            "solitary",
+          ],
+          weight: "800-2,300 kg",
+          lifespan: "35-50 years",
+          speed: "50 km/h",
+        },
+        {
+          name: "Sheep",
+          scientific: "Ovis aries",
+          habitat: "Grasslands, meadows, and mountainous regions worldwide",
+          diet: "Herbivore",
+          status: "Domesticated",
+          image:
+            "https://t4.ftcdn.net/jpg/03/12/95/13/360_F_312951336_8LxW7gBLHslTnpbOAwxFo5FpD2R5vGxu.jpg",
+          description:
+            "Sheep are domesticated ruminants raised for wool, meat, and milk. Known for their thick wool coats and social behavior, they have been integral to human agriculture for thousands of years. Sheep are herd animals with strong flocking instincts and are easily managed in pastures.",
+          tags: [
+            "wool",
+            "herbivore",
+            "domesticated",
+            "flock",
+            "ruminant",
+            "livestock",
+          ],
+          weight: "45-160 kg",
+          lifespan: "10-12 years",
+          speed: "40 km/h",
+        },
+        {
+          name: "Camel",
+          scientific: "Camelus",
+          habitat:
+            "Deserts and arid regions of the Middle East, Africa, and Asia",
+          diet: "Herbivore",
+          status: "Domesticated",
+          image:
+            "https://wallpapers.com/images/hd/desert-camel-photography-6avv99mga9k95hm8.jpg",
+          description:
+            "Camels are large, desert-adapted mammals known for their ability to go long periods without water. There are two main types: the dromedary (one hump) and the Bactrian (two humps). Camels are vital pack animals in arid regions and have specialized adaptations such as storing fat in their humps and long eyelashes to protect against sand.",
+          tags: [
+            "desert",
+            "hump",
+            "pack animal",
+            "herbivore",
+            "domesticated",
+            "resilient",
+          ],
+          weight: "300-1000 kg",
+          lifespan: "40-50 years",
+          speed: "65 km/h",
+        },
+        {
+          name: "Ostrich",
+          scientific: "Struthio camelus",
+          habitat: "Savannas, grasslands, and semi-arid regions of Africa",
+          diet: "Herbivore",
+          status: "Least Concern",
+          image:
+            "https://wallpapercat.com/w/full/a/4/c/1032365-1920x1080-desktop-1080p-ostrich-background.jpg",
+          description:
+            'The ostrich, often called the "camel bird" for its long neck and legs, is the largest living bird and is flightless. Native to Africa, it is known for its incredible speed and powerful legs. Ostriches use their strong legs for defense and can run up to 70 km/h to escape predators.',
+          tags: [
+            "flightless bird",
+            "largest bird",
+            "camel bird",
+            "fast runner",
+            "long legs",
+            "savanna",
+          ],
+          weight: "100-160 kg",
+          lifespan: "30-40 years",
+          speed: "70 km/h",
+        },
+        {
+          name: "Rabbit",
+          scientific: "Oryctolagus cuniculus (domestic rabbit)",
+          habitat: "Grasslands, meadows, forests, and human-populated areas",
+          diet: "Herbivore",
+          status: "Domesticated",
+          image:
+            "https://images.unsplash.com/photo-1591561582301-7ce6588cc286?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTh8fHJhYmJpdHxlbnwwfHwwfHx8MA%3D%3D",
+          description:
+            "Rabbits are small mammals known for their long ears, strong hind legs, and rapid reproduction. They are social animals and are both wild and domesticated. Rabbits are prey animals and have evolved keen senses and agility to avoid predators. Their diet consists mostly of grass, vegetables, and hay.",
+          tags: [
+            "small mammal",
+            "herbivore",
+            "burrower",
+            "fast",
+            "prey",
+            "long ears",
+          ],
+          weight: "1-2.5 kg",
+          lifespan: "8-12 years",
+          speed: "40-45 km/h",
+        },
+        {
+          name: "Llama",
+          scientific: "Lama glama",
+          habitat: "Andean highlands of South America",
+          diet: "Herbivore",
+          status: "Domesticated",
+          image:
+            "https://c4.wallpaperflare.com/wallpaper/238/857/132/5bd26133a5d56-wallpaper-preview.jpg",
+          description:
+            "Llamas are domesticated South American camelids, closely related to alpacas. Used for centuries as pack animals by Andean cultures, llamas are also valued for their wool. They are intelligent, social animals that communicate through body language and soft humming sounds.",
+          tags: [
+            "camelid",
+            "pack animal",
+            "herbivore",
+            "Andes",
+            "wool",
+            "domesticated",
+          ],
+          weight: "130-200 kg",
+          lifespan: "15-25 years",
+          speed: "56 km/h",
+        },
+        {
+          name: "Cat",
+          scientific: "Felis catus",
+          habitat:
+            "Domestic, urban, suburban, and rural environments worldwide",
+          diet: "Carnivore",
+          status: "Domesticated",
+          image:
+            "https://images.unsplash.com/photo-1592194996308-7b43878e84a6?w=800&h=600&fit=crop",
+          description:
+            "Cats are small, carnivorous mammals often kept as pets. They are known for their agility, independence, and ability to hunt rodents. Domestic cats have been companions to humans for thousands of years and are highly adaptive to various living conditions.",
+          tags: [
+            "pet",
+            "carnivore",
+            "independent",
+            "agile",
+            "hunter",
+            "domesticated",
+          ],
+          weight: "3.6-4.5 kg",
+          lifespan: "12-18 years",
+          speed: "48 km/h",
+        },
+        {
+          name: "Cow",
+          scientific: "Bos taurus",
+          habitat: "Grasslands, farmlands, and pastures worldwide",
+          diet: "Herbivore",
+          status: "Domesticated",
+          image:
+            "https://plus.unsplash.com/premium_photo-1677850455009-d67da2b774c9?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8Y2F0dGxlfGVufDB8fDB8fHww",
+          description:
+            "Cows are large domesticated herbivores raised primarily for milk, meat, and labor. They are ruminants with a specialized stomach that allows them to digest tough plant material. Cows are social animals and have been integral to agriculture and rural economies around the world.",
+          tags: [
+            "livestock",
+            "ruminant",
+            "milk",
+            "herbivore",
+            "domesticated",
+            "farm animal",
+          ],
+          weight: "400-900 kg",
+          lifespan: "15-20 years",
+          speed: "40 km/h",
+        },
+        {
+          name: "Crocodile",
+          scientific: "Crocodylidae",
+          habitat:
+            "Rivers, lakes, wetlands, and mangrove swamps in tropical regions",
+          diet: "Carnivore",
+          status: "Least Concern",
+          image:
+            "https://www.wallpaperflare.com/static/972/366/384/crocodile-dangerous-face-predatory-wallpaper.jpg",
+          description:
+            "Crocodiles are large, aquatic reptiles known for their powerful jaws, stealthy movement, and ancient lineage. They are ambush predators and can stay submerged for long periods. Crocodiles are found in tropical regions and are among the most dangerous reptiles.",
+          tags: [
+            "reptile",
+            "carnivore",
+            "ambush predator",
+            "aquatic",
+            "ancient",
+            "powerful",
+          ],
+          weight: "400-1,000 kg",
+          lifespan: "70-100 years",
+          speed: "24-35 km/h (on land), 32 km/h (in water)",
+        },
+        {
+          name: "Deer",
+          scientific: "Cervidae",
+          habitat:
+            "Forests, grasslands, wetlands, and mountainous regions worldwide",
+          diet: "Herbivore",
+          status: "Least Concern",
+          image:
+            "https://i.pinimg.com/736x/66/30/ac/6630ac2e5c3c5d6821693db3e3c878e0.jpg",
+          description:
+            "Deer are graceful, herbivorous mammals known for their antlers, which are typically found on males. They are highly adaptive and inhabit diverse ecosystems around the world. Deer are prey animals and rely on speed and alertness to evade predators.",
+          tags: [
+            "herbivore",
+            "antlers",
+            "graceful",
+            "prey",
+            "wildlife",
+            "forest",
+          ],
+          weight: "30-300 kg (varies by species)",
+          lifespan: "10-20 years",
+          speed: "50-80 km/h",
+        },
+        {
+          name: "Dog",
+          scientific: "Canis lupus familiaris",
+          habitat: "Domestic environments worldwide",
+          diet: "Omnivore",
+          status: "Domesticated",
+          image:
+            "https://images.unsplash.com/photo-1558788353-f76d92427f16?w=800&h=600&fit=crop",
+          description:
+            "Dogs are domesticated mammals and one of the most popular pets worldwide. Known for their loyalty, intelligence, and diverse roles in human society, dogs have been bred into hundreds of breeds for companionship, work, and protection.",
+          tags: [
+            "pet",
+            "loyal",
+            "intelligent",
+            "domesticated",
+            "companion",
+            "omnivore",
+          ],
+          weight: "5-50+ kg (varies by breed)",
+          lifespan: "10-15 years",
+          speed: "30-45 km/h",
+        },
+        {
+          name: "Goat",
+          scientific: "Capra aegagrus hircus",
+          habitat: "Mountains, grasslands, and farmlands worldwide",
+          diet: "Herbivore",
+          status: "Domesticated",
+          image:
+            "https://t4.ftcdn.net/jpg/03/74/84/37/360_F_374843717_7plgFYCdbVqjzRTDpTBo5i4OCVb58CX6.jpg",
+          description:
+            "Goats are hardy, domesticated herbivores widely kept for their milk, meat, fur, and companionship. Known for their climbing ability and curious nature, goats are very adaptable and thrive in diverse environments.",
+          tags: [
+            "livestock",
+            "herbivore",
+            "milk",
+            "climber",
+            "domesticated",
+            "farm animal",
+          ],
+          weight: "20-140 kg",
+          lifespan: "10-18 years",
+          speed: "15-25 km/h",
+        },
+        {
+          name: "Hargila Bok",
+          scientific: "Leptoptilos dubius",
+          habitat:
+            "Wetlands, garbage dumps, and urban areas in Assam (India) and Cambodia",
+          diet: "Carnivore",
+          status: "Endangered",
+          image:
+            "https://thumbs.dreamstime.com/b/lesser-adjutant-stork-detail-upper-body-31391725.jpg",
+          description:
+            'The Hargila Bok, or Greater Adjutant, is a large scavenger stork species found in parts of South Asia. Known locally as "Hargila" in Assam, it plays a crucial role in the ecosystem by consuming carrion and waste. It has a massive bill, a naked neck, and a distinctive pouch. Conservation efforts are underway to save this endangered bird.',
+          tags: [
+            "scavenger",
+            "wetlands",
+            "endangered",
+            "stork",
+            "large bird",
+            "urban dweller",
+          ],
+          weight: "5-8 kg",
+          lifespan: "30-40 years",
+          speed: "30-40 km/h (flight)",
+        },
+        {
+          name: "Hippopotamus",
+          scientific: "Hippopotamus amphibius",
+          habitat: "Rivers, lakes, and swamps in sub-Saharan Africa",
+          diet: "Herbivore",
+          status: "Vulnerable",
+          image:
+            "https://c0.wallpaperflare.com/preview/651/121/68/hippo-nature-animal-world-safari.jpg",
+          description:
+            "Hippopotamuses are large, mostly aquatic mammals known for their massive size and strong jaws. Despite their bulk, hippos can run surprisingly fast on land and are considered among the most dangerous animals in Africa due to their territorial nature.",
+          tags: [
+            "aquatic",
+            "large mammal",
+            "herbivore",
+            "territorial",
+            "Africa",
+            "dangerous",
+          ],
+          weight: "1,400-4,500 kg",
+          lifespan: "40-50 years",
+          speed: "30 km/h (land), 8 km/h (water)",
+        },
+        {
+          name: "Horse",
+          scientific: "Equus ferus caballus",
+          habitat: "Plains, grasslands, and human settlements worldwide",
+          diet: "Herbivore",
+          status: "Domesticated",
+          image:
+            "https://i.pinimg.com/736x/50/94/7c/50947ce9596a4c5f0e4f0af09d49e277.jpg",
+          description:
+            "Horses are domesticated mammals known for their strength, speed, and historical importance in transportation and agriculture. Horses are social, intelligent animals and come in many breeds suited for different purposes such as riding, racing, or farming.",
+          tags: [
+            "domesticated",
+            "herbivore",
+            "riding",
+            "fast",
+            "strong",
+            "social",
+          ],
+          weight: "400-1,000 kg",
+          lifespan: "25-30 years",
+          speed: "88 km/h (maximum race speed)",
+        },
+        {
+          name: "Kalo Bok",
+          scientific: "Ciconia nigra",
+          habitat:
+            "Forests, wetlands, and rivers in Europe, Asia, and parts of Africa",
+          diet: "Carnivore",
+          status: "Least Concern",
+          image:
+            "https://cdn.download.ams.birds.cornell.edu/api/v1/asset/254729681/320",
+          description:
+            "The Kalo Bok, or Black Stork, is a solitary and secretive bird that prefers quiet, forested wetlands. It has a distinctive black plumage with a greenish sheen and red legs and bill. Unlike its white cousin, the black stork avoids human settlements.",
+          tags: [
+            "wetland",
+            "forest",
+            "migratory",
+            "carnivore",
+            "secretive",
+            "stork",
+          ],
+          weight: "2.5-4.5 kg",
+          lifespan: "20-30 years",
+          speed: "40-60 km/h (flight)",
+        },
+        {
+          name: "Peacock",
+          scientific: "Pavo cristatus",
+          habitat: "Forests, grasslands, and farmlands of South Asia",
+          diet: "Omnivore",
+          status: "Least Concern",
+          image: "https://thumbs.dreamstime.com/b/peacock-16677271.jpg",
+          description:
+            "The peacock is the national bird of India and is known for its dazzling, iridescent tail feathers that form a fan. Males display their plumage to attract mates. They are ground-dwelling birds that roost in trees and are admired for their beauty and symbolic significance.",
+          tags: [
+            "bird",
+            "colorful",
+            "display feathers",
+            "ground-dwelling",
+            "ornamental",
+            "national symbol",
+          ],
+          weight: "4-6 kg",
+          lifespan: "15-20 years",
+          speed: "16 km/h (on ground), 10 km/h (short flight)",
+        },
+        {
+          name: "Porcupine",
+          scientific: "Erethizontidae (New World), Hystricidae (Old World)",
+          habitat: "Forests, deserts, and rocky areas globally",
+          diet: "Herbivore",
+          status: "Least Concern",
+          image:
+            "https://www.shutterstock.com/image-photo/solitary-crested-porcupine-wild-detailed-600nw-2582173053.jpg",
+          description:
+            "Porcupines are medium-sized rodents known for their sharp quills, which serve as a defense mechanism. They are mostly nocturnal and solitary, feeding on bark, roots, fruits, and leaves. Despite their slow movement, their quills provide strong protection against predators.",
+          tags: [
+            "rodent",
+            "quills",
+            "herbivore",
+            "nocturnal",
+            "defensive",
+            "solitary",
+          ],
+          weight: "5-15 kg",
+          lifespan: "10-15 years",
+          speed: "3-6 km/h",
+        },
+        {
+          name: "Donkey",
+          scientific: "Equus africanus asinus",
+          habitat: "Arid and semi-arid regions, farms, and rural areas",
+          diet: "Herbivore",
+          status: "Domesticated",
+          image:
+            "https://static.vecteezy.com/system/resources/thumbnails/027/734/448/small/cute-donkey-grazing-on-grass-in-a-rural-meadow-at-sunset-generated-by-ai-photo.jpg",
+          description:
+            "Donkeys are domesticated hoofed mammals known for their strength, endurance, and calm temperament. They are often used as pack animals and for light farm work, especially in rural and mountainous regions. Donkeys are sure-footed and thrive in harsh conditions.",
+          tags: [
+            "domesticated",
+            "herbivore",
+            "pack animal",
+            "hardy",
+            "rural",
+            "working animal",
+          ],
+          weight: "180-500 kg",
+          lifespan: "25-30 years",
+          speed: "24-30 km/h",
+        },
+        {
+          name: "Squirrel",
+          scientific: "Sciuridae",
+          habitat:
+            "Forests, urban parks, gardens, and tree-dense areas worldwide",
+          diet: "Omnivore",
+          status: "Least Concern",
+          image:
+            "https://t4.ftcdn.net/jpg/01/63/33/49/360_F_163334984_JNQKwqbnemWKX8TbgAcCGpAH7mdfSWZc.jpg",
+          description:
+            "Squirrels are small, agile rodents known for their bushy tails and acrobatic climbing abilities. They are active during the day and are often seen gathering food or darting through trees. Squirrels play a vital role in seed dispersal in forest ecosystems.",
+          tags: [
+            "rodent",
+            "agile",
+            "climber",
+            "omnivore",
+            "day-active",
+            "tree dweller",
+          ],
+          weight: "0.2-1.5 kg",
+          lifespan: "5-10 years",
+          speed: "20-30 km/h",
+        },
+        {
+          name: "Monkey",
+          scientific: "Cercopithecidae (Old World), Cebidae (New World)",
+          habitat: "Tropical forests, savannas, and mountainous areas",
+          diet: "Omnivore",
+          status: "Least Concern",
+          image:
+            "https://t4.ftcdn.net/jpg/05/29/61/37/360_F_529613760_ZN7wI9c62MyPeFC8ioliQ2wrVohVuRey.jpg",
+          description:
+            "Monkeys are intelligent, social primates found across Asia, Africa, and the Americas. They live in groups called troops and use vocalizations and gestures to communicate. Monkeys are highly adaptive and can live in a variety of environments.",
+          tags: [
+            "primate",
+            "social",
+            "intelligent",
+            "omnivore",
+            "tree dweller",
+            "playful",
+          ],
+          weight: "0.3-40 kg (varies widely)",
+          lifespan: "15-40 years",
+          speed: "35-55 km/h",
+        },
+      ];
+
+      function generateAnimalCards(animals) {
+        const grid = document.getElementById("animalsGrid");
+        grid.innerHTML = "";
+
+        animals.forEach((animal) => {
+          let statusClass = "";
+          if (animal.status.includes("Endangered"))
+            statusClass = "status-endangered";
+          else if (animal.status.includes("Vulnerable"))
+            statusClass = "status-vulnerable";
+          else if (animal.status.includes("Domesticated"))
+            statusClass = "status-domesticated";
+          else if (animal.status.includes("Least Concern"))
+            statusClass = "status-least-concern";
+
+          const card = document.createElement("div");
+          card.className = "animal-card";
+          card.innerHTML = `
+                    <img src="${animal.image}" alt="${animal.name}" class="animal-image">
+                    <div class="animal-info">
+                        <div class="animal-name">
+                            <span>${animal.name}</span>
+                            <span class="status-badge ${statusClass}">${animal.status}</span>
+                        </div>
+                        <div class="scientific-name">${animal.scientific}</div>
+                        <div class="animal-stats">
+                            <div class="stat-item">
+                                <div class="stat-icon"><i class="fas fa-weight-hanging"></i></div>
+                                <div>${animal.weight}</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-icon"><i class="fas fa-running"></i></div>
+                                <div>${animal.speed}</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-icon"><i class="fas fa-heart"></i></div>
+                                <div>${animal.lifespan}</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-icon"><i class="fas fa-utensils"></i></div>
+                                <div>${animal.diet}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+          card.addEventListener("click", () => openModal(animal));
+          grid.appendChild(card);
+        });
+      }
+
+      function openModal(animal) {
+        const modal = document.getElementById("detailModal");
+        const modalImage = document.getElementById("modalImage");
+        const modalAnimalName = document.getElementById("modalAnimalName");
+        const modalScientificName = document.getElementById(
+          "modalScientificName"
+        );
+        const modalDescription = document.getElementById("modalDescription");
+        const modalHabitat = document.getElementById("modalHabitat");
+        const modalDiet = document.getElementById("modalDiet");
+        const modalStatus = document.getElementById("modalStatus");
+        const modalWeight = document.getElementById("modalWeight");
+        const modalLifespan = document.getElementById("modalLifespan");
+        const modalSpeed = document.getElementById("modalSpeed");
+        const modalTags = document.getElementById("modalTags");
+
+        modalImage.src = animal.image;
+        modalAnimalName.textContent = animal.name;
+        modalScientificName.textContent = animal.scientific;
+        modalDescription.textContent = animal.description;
+        modalHabitat.textContent = animal.habitat;
+        modalDiet.textContent = animal.diet;
+        modalStatus.textContent = animal.status;
+        modalWeight.textContent = animal.weight;
+        modalLifespan.textContent = animal.lifespan;
+        modalSpeed.textContent = animal.speed;
+
+        modalTags.innerHTML = "";
+        animal.tags.forEach((tag) => {
+          const tagElement = document.createElement("span");
+          tagElement.className = "tag";
+          tagElement.textContent = tag;
+          modalTags.appendChild(tagElement);
+        });
+
+        modal.classList.add("active");
+        document.body.style.overflow = "hidden";
+      }
+
+      function closeModal() {
+        const modal = document.getElementById("detailModal");
+        modal.classList.remove("active");
+        document.body.style.overflow = "auto";
+      }
+
+      function copyAnimalDetails() {
+        const name = document.getElementById("modalAnimalName").textContent;
+        const scientific = document.getElementById(
+          "modalScientificName"
+        ).textContent;
+        const description =
+          document.getElementById("modalDescription").textContent;
+        const habitat = document.getElementById("modalHabitat").textContent;
+        const diet = document.getElementById("modalDiet").textContent;
+        const status = document.getElementById("modalStatus").textContent;
+        const weight = document.getElementById("modalWeight").textContent;
+        const lifespan = document.getElementById("modalLifespan").textContent;
+        const speed = document.getElementById("modalSpeed").textContent;
+
+        const details = `
+Animal: ${name}
+Scientific Name: ${scientific}
+Status: ${status}
+
+Description:
+${description}
+
+Details:
+- Habitat: ${habitat}
+- Diet: ${diet}
+- Weight: ${weight}
+- Lifespan: ${lifespan}
+- Top Speed: ${speed}
+            `;
+
+        navigator.clipboard.writeText(details).then(() => {
+          alert("Animal details copied to clipboard!");
+        });
+      }
+
+      // Toggle theme
+      function toggleTheme() {
+        document.body.classList.toggle("light-theme");
+        const themeIcon = document.getElementById("theme-icon");
+        const themeText = document.getElementById("theme-text");
+
+        if (document.body.classList.contains("light-theme")) {
+          themeIcon.className = "fas fa-sun";
+          themeText.textContent = "Light Mode";
+        } else {
+          themeIcon.className = "fas fa-moon";
+          themeText.textContent = "Dark Mode";
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        generateAnimalCards(animalsDatabase);
+
+        const filterButtons = document.querySelectorAll(".filter-btn");
+        filterButtons.forEach((button) => {
+          button.addEventListener("click", () => {
+            filterButtons.forEach((btn) => btn.classList.remove("active"));
+
+            button.classList.add("active");
+
+            const filter = button.dataset.filter;
+            let filteredAnimals = [...animalsDatabase];
+
+            if (filter !== "all") {
+              filteredAnimals = animalsDatabase.filter((animal) => {
+                if (filter === "endangered") {
+                  return (
+                    animal.status.includes("Endangered") ||
+                    animal.status.includes("Critically Endangered")
+                  );
+                } else if (filter === "carnivore") {
+                  return animal.diet === "Carnivore";
+                } else if (filter === "herbivore") {
+                  return animal.diet === "Herbivore";
+                }
+                return true;
+              });
+            }
+
+            generateAnimalCards(filteredAnimals);
+          });
+        });
+
+        const searchInput = document.getElementById("searchInput");
+        searchInput.addEventListener("input", () => {
+          const query = searchInput.value.toLowerCase();
+          const filteredAnimals = animalsDatabase.filter(
+            (animal) =>
+              animal.name.toLowerCase().includes(query) ||
+              animal.scientific.toLowerCase().includes(query) ||
+              animal.description.toLowerCase().includes(query) ||
+              animal.tags.some((tag) => tag.toLowerCase().includes(query))
+          );
+
+          generateAnimalCards(filteredAnimals);
+        });
+      });
+    </script>
+  </body>
+</html>
